@@ -18,13 +18,52 @@ clock = pygame.time.Clock()
 
 class Game:
     def __init__(self):
-        pass
+        self.STARTING_ROUND_TIME = 30
+
+        self.score = 0
+        self.round_number = 1
+        self.frame_count = 0
+        self.round_time = self.STARTING_ROUND_TIME
+
+        # set fonts
+        self.title_font = pygame.font.Font("fonts/Poultrygeist.ttf", 48)
+        self.HUD_font = pygame.font.Font("fonts/Pixel.ttf", 24)
 
     def update(self):
-        pass
+        self.frame_count += 1
+        if self.frame_count % FPS == 0:
+            self.round_time -= 1
+            self.frame_count = 0
 
     def draw(self):
-        pass
+        WHITE = (255, 255, 255)
+        GREEN = (0, 255, 0)
+
+        score_text = self.HUD_font.render("Score: " + str(self.score), True, WHITE)
+        score_rect = score_text.get_rect()
+        score_rect.topleft = (10, WINDOW_HEIGHT - 50)
+
+        health_text = self.HUD_font.render("Health: " + str(100), True, WHITE)
+        health_rect = health_text.get_rect()
+        health_rect.topleft = (10, WINDOW_HEIGHT - 25)
+
+        title_text = self.title_font.render("Zombie Knight", True, GREEN)
+        title_rect = title_text.get_rect()
+        title_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT - 25)
+
+        round_text = self.HUD_font.render("Night: " + str(self.round_number), True, WHITE)
+        round_rect = round_text.get_rect()
+        round_rect.topright = (WINDOW_WIDTH - 10, WINDOW_HEIGHT - 50)
+
+        time_text = self.HUD_font.render("Sunrise in: " + str(self.round_time), True, WHITE)
+        time_rect = time_text.get_rect()
+        time_rect.topright = (WINDOW_WIDTH - 10, WINDOW_HEIGHT - 25)
+
+        display_surface.blit(score_text, score_rect)
+        display_surface.blit(health_text, health_rect)
+        display_surface.blit(title_text, title_rect)
+        display_surface.blit(round_text, round_rect)
+        display_surface.blit(time_text, time_rect)
 
     def add_zombie(self):
         pass
@@ -73,8 +112,14 @@ class Tile(pygame.sprite.Sprite):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, image, x, y):
-        pass
+    def __init__(self, x, y, platform_group, portal_group, bullet_group):
+        super().__init__()
+
+        self.HORIZONTAL_ACCELERATION = 2
+        self.HORIZONTAL_FRICTION = 0.15
+        self.VERTICAL_ACCELERATION = 0.8
+        self.VERTICAL_JUMP_SPEED = 18
+        self.STARTING_HEALTH = 100
 
     def update(self):
         pass
@@ -388,6 +433,8 @@ background_image = pygame.transform.scale(pygame.image.load("images/background.p
 background_rect = background_image.get_rect()
 background_rect.topleft = (0, 0)
 
+my_game = Game()
+
 # Main loop
 
 running = True
@@ -404,6 +451,9 @@ while running:
 
     my_portal_group.update()
     my_portal_group.draw(display_surface)
+
+    my_game.update()
+    my_game.draw()
 
     # Update
     pygame.display.update()
