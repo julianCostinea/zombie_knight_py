@@ -248,19 +248,51 @@ class Player(pygame.sprite.Sprite):
         self.starting_y = y
 
     def update(self):
-        pass
+        self.move()
+        self.check_collisions()
+        self.check_animations()
 
     def move(self):
-        pass
+        self.acceleration = vector(0, self.VERTICAL_ACCELERATION)
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.acceleration.x = -self.HORIZONTAL_ACCELERATION
+        if keys[pygame.K_RIGHT]:
+            self.acceleration.x = self.HORIZONTAL_ACCELERATION
+
+        self.acceleration.x -= self.velocity.x * self.HORIZONTAL_FRICTION
+        self.velocity += self.acceleration
+        self.position += self.velocity + 0.5 * self.acceleration
+
+        if self.position.x < 0:
+            self.position.x = WINDOW_WIDTH
+        elif self.position.x > WINDOW_WIDTH:
+            self.position.x = 0
+
+        self.rect.bottomleft = self.position
 
     def check_collisions(self):
-        pass
+        if self.velocity.y > 0:
+            collided_platforms = pygame.sprite.spritecollide(self, self.platform_group, False)
+            if collided_platforms:
+                self.position.y = collided_platforms[0].rect.top + 1
+                self.velocity.y = 0
+        if self.velocity.y < 0:
+            collided_platforms = pygame.sprite.spritecollide(self, self.platform_group, False)
+            if collided_platforms:
+                self.velocity.y = 0
+                while pygame.sprite.spritecollide(self, self.platform_group, False):
+                    self.position.y += 1
+                    self.rect.bottomleft = self.position
 
     def check_animations(self):
         pass
 
     def jump(self):
-        pass
+        if pygame.sprite.spritecollide(self, self.platform_group, False):
+            self.velocity.y = -self.VERTICAL_JUMP_SPEED
+            self.jump_sound.play()
 
     def fire(self):
         pass
@@ -553,7 +585,7 @@ for i in range(len(tile_map)):
             Portal(j * 32, i * 32, "purple", my_portal_group)
         # Player
         elif tile_map[i][j] == 9:
-            my_player = Player(j * 32, i * 32, my_platform_group, my_portal_group, my_bullet_group)
+            my_player = Player(j * 32 - 32, i * 32 + 32, my_platform_group, my_portal_group, my_bullet_group)
             my_player_group.add(my_player)
 
 background_image = pygame.transform.scale(pygame.image.load("images/background.png"), (WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -569,6 +601,10 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                my_player.jump()
 
     display_surface.blit(background_image, background_rect)
 
