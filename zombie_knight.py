@@ -258,8 +258,15 @@ class Player(pygame.sprite.Sprite):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.acceleration.x = -self.HORIZONTAL_ACCELERATION
-        if keys[pygame.K_RIGHT]:
+            self.animate(self.move_left_sprites, 0.5)
+        elif keys[pygame.K_RIGHT]:
             self.acceleration.x = self.HORIZONTAL_ACCELERATION
+            self.animate(self.move_right_sprites, 0.5)
+        else:
+            if self.velocity.x > 0:
+                self.animate(self.idle_right_sprites, 0.5)
+            else:
+                self.animate(self.idle_left_sprites, 0.5)
 
         self.acceleration.x -= self.velocity.x * self.HORIZONTAL_FRICTION
         self.velocity += self.acceleration
@@ -285,28 +292,63 @@ class Player(pygame.sprite.Sprite):
                 while pygame.sprite.spritecollide(self, self.platform_group, False):
                     self.position.y += 1
                     self.rect.bottomleft = self.position
+        # portal collision
+        if pygame.sprite.spritecollide(self, self.portal_group, False):
+            self.portal_sound.play()
+            if self.position.x > WINDOW_WIDTH // 2:
+                self.position.x = 86
+            else:
+                self.position.x = WINDOW_WIDTH - 150
+
+            if self.position.y > WINDOW_HEIGHT // 2:
+                self.position.y = 64
+            else:
+                self.position.y = WINDOW_HEIGHT - 132
+
+            self.rect.bottomleft = self.position
 
     def check_animations(self):
-        pass
+        if self.animate_jump:
+            if self.velocity.x > 0:
+                self.animate(self.jump_right_sprites, 0.1)
+            else:
+                self.animate(self.jump_left_sprites, 0.1)
 
     def jump(self):
         if pygame.sprite.spritecollide(self, self.platform_group, False):
             self.velocity.y = -self.VERTICAL_JUMP_SPEED
             self.jump_sound.play()
+            self.animate_jump = True
 
     def fire(self):
         pass
 
     def reset(self):
-        pass
+        self.position = vector(self.starting_x, self.starting_y)
+        self.rect.bottomleft = self.position
 
-    def animate(self):
-        pass
+    def animate(self, sprite_list, speed):
+        if self.current_sprite < len(sprite_list) - 1:
+            self.current_sprite += speed
+        else:
+            self.current_sprite = 0
+            self.animate_jump = False
+
+        self.image = sprite_list[int(self.current_sprite)]
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, image, x, y, direction):
-        pass
+    def __init__(self, x, y, bullet_group, player):
+        super().__init__()
+
+        self.VELOCITY = 20
+        self.RANGE = 500
+
+        if player.velocity.x > 0:
+            self.image = pygame.transform.scale(pygame.image.load("images/player/slash.png"), (32, 32))
+        else:
+            self.image = pygame.transform.flip(pygame.transform.scale(pygame.image.load("images/player/slash.png"),
+                                                                      (32, 32)), True, False)
 
     def update(self):
         pass
