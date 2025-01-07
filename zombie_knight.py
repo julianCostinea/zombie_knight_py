@@ -440,15 +440,145 @@ class Zombie(pygame.sprite.Sprite):
             for sprite in self.rise_right_sprites:
                 self.rise_left_sprites.append(pygame.transform.flip(sprite, True, False))
 
+        else:
+            self.walk_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/walk/Walk (1).png"), (64, 64)))
+            self.walk_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/walk/Walk (2).png"), (64, 64)))
+            self.walk_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/walk/Walk (3).png"), (64, 64)))
+            self.walk_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/walk/Walk (4).png"), (64, 64)))
+            self.walk_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/walk/Walk (5).png"), (64, 64)))
+            self.walk_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/walk/Walk (6).png"), (64, 64)))
+            self.walk_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/walk/Walk (7).png"), (64, 64)))
+            self.walk_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/walk/Walk (8).png"), (64, 64)))
+            self.walk_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/walk/Walk (9).png"), (64, 64)))
+            self.walk_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/walk/Walk (10).png"), (64, 64)))
+
+            for sprite in self.walk_right_sprites:
+                self.walk_left_sprites.append(pygame.transform.flip(sprite, True, False))
+
+            self.die_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (1).png"), (64, 64)))
+            self.die_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (2).png"), (64, 64)))
+            self.die_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (3).png"), (64, 64)))
+            self.die_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (4).png"), (64, 64)))
+            self.die_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (5).png"), (64, 64)))
+            self.die_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (6).png"), (64, 64)))
+            self.die_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (7).png"), (64, 64)))
+            self.die_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (8).png"), (64, 64)))
+            self.die_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (9).png"), (64, 64)))
+            self.die_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (10).png"), (64, 64)))
+
+            for sprite in self.die_right_sprites:
+                self.die_left_sprites.append(pygame.transform.flip(sprite, True, False))
+
+            self.rise_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (10).png"), (64, 64)))
+            self.rise_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (9).png"), (64, 64)))
+            self.rise_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (8).png"), (64, 64)))
+            self.rise_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (7).png"), (64, 64)))
+            self.rise_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (6).png"), (64, 64)))
+            self.rise_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (5).png"), (64, 64)))
+            self.rise_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (4).png"), (64, 64)))
+            self.rise_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (3).png"), (64, 64)))
+            self.rise_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (2).png"), (64, 64)))
+            self.rise_right_sprites.append(
+                pygame.transform.scale(pygame.image.load("images/zombie/girl/dead/Dead (1).png"), (64, 64)))
+
+            for sprite in self.rise_right_sprites:
+                self.rise_left_sprites.append(pygame.transform.flip(sprite, True, False))
+
+        self.direction = random.choice([-1, 1])
+        self.current_sprite = 0
+
+        if self.direction == -1:
+            self.image = self.walk_left_sprites[self.current_sprite]
+        else:
+            self.image = self.walk_right_sprites[self.current_sprite]
+
+        self.rect = self.image.get_rect()
+        self.rect.bottomleft = (random.randint(100, WINDOW_WIDTH-100), -100)
+
+        self.platform_group = platform_group
+        self.portal_group = portal_group
+
+        self.animate_death = False
+        self.animate_rise = False
+
+        self.hit_sound = pygame.mixer.Sound("sounds/zombie_hit.wav")
+        self.kick_sound = pygame.mixer.Sound("sounds/zombie_kick.wav")
+        self.portal_sound = pygame.mixer.Sound("sounds/portal_sound.wav")
+
+        self.position = vector(self.rect.x, self.rect.y)
+        self.velocity = vector(self.direction * random.randint(min_speed, max_speed), 0)
+        self.acceleration = vector(0, self.VERTICAL_ACCELERATION)
+
+        self.is_dead = False
+        self.round_time = 0
+        self.frame_count = 0
 
     def update(self):
-        pass
+        self.move()
+        self.check_collisions()
+        self.check_animations()
 
     def move(self):
-        pass
+        self.velocity += self.acceleration
+        self.position += self.velocity + 0.5 * self.acceleration
+
+        if self.position.x < 0:
+            self.position.x = WINDOW_WIDTH
+        elif self.position.x > WINDOW_WIDTH:
+            self.position.x = 0
+
+        self.rect.bottomleft = self.position
 
     def check_collisions(self):
-        pass
+
+        collided_platforms = pygame.sprite.spritecollide(self, self.platform_group, False)
+        if collided_platforms:
+            self.position.y = collided_platforms[0].rect.top + 1
+            self.velocity.y = 0
+
+        # portal collision
+        if pygame.sprite.spritecollide(self, self.portal_group, False):
+            self.portal_sound.play()
+            if self.position.x > WINDOW_WIDTH // 2:
+                self.position.x = 86
+            else:
+                self.position.x = WINDOW_WIDTH - 150
+
+            if self.position.y > WINDOW_HEIGHT // 2:
+                self.position.y = 64
+            else:
+                self.position.y = WINDOW_HEIGHT - 132
+
+            self.rect.bottomleft = self.position
 
     def check_animations(self):
         pass
@@ -732,6 +862,9 @@ while running:
                 my_player.jump()
             if event.key == pygame.K_UP:
                 my_player.fire()
+            if event.key == pygame.K_RETURN:
+                zombie = Zombie(my_platform_group, my_portal_group, 2, 7)
+                my_zombie_group.add(zombie)
 
     display_surface.blit(background_image, background_rect)
 
@@ -747,6 +880,9 @@ while running:
 
     my_bullet_group.update()
     my_bullet_group.draw(display_surface)
+
+    my_zombie_group.update()
+    my_zombie_group.draw(display_surface)
 
     my_game.update()
     my_game.draw()
