@@ -19,6 +19,7 @@ clock = pygame.time.Clock()
 class Game:
     def __init__(self, player, zombie_group, platform_group, portal_group, bullet_group, ruby_group):
         self.STARTING_ROUND_TIME = 30
+        self.STARTING_ZOMBIE_CREATION_TIME = 5
 
         self.score = 0
         self.round_number = 1
@@ -52,7 +53,7 @@ class Game:
         score_rect = score_text.get_rect()
         score_rect.topleft = (10, WINDOW_HEIGHT - 50)
 
-        health_text = self.HUD_font.render("Health: " + str(100), True, WHITE)
+        health_text = self.HUD_font.render("Health: " + str(self.player.health), True, WHITE)
         health_rect = health_text.get_rect()
         health_rect.topleft = (10, WINDOW_HEIGHT - 25)
 
@@ -86,6 +87,19 @@ class Game:
                     zombie.is_dead = True
                     zombie.animate_death = True
                     self.score += 1
+
+        collision_list = pygame.sprite.spritecollide(self.player, self.zombie_group, False)
+        if collision_list:
+            for zombie in collision_list:
+                if zombie.is_dead == True:
+                    zombie.kick_sound.play()
+                    zombie.kill()
+                    self.score += 25
+                else:
+                    self.player.hit_sound.play()
+                    self.player.health -= 20
+                    self.player.position.x -= 256 * zombie.direction
+                    self.player.rect.bottomleft = self.player.position
 
     def check_round_completion(self):
         pass
@@ -563,6 +577,14 @@ class Zombie(pygame.sprite.Sprite):
         self.check_collisions()
         self.check_animations()
 
+        if self.is_dead:
+            self.frame_count += 1
+            if self.frame_count % FPS == 0:
+                self.round_time += 1
+                if self.round_time == self.RISE_TIME:
+                    self.animate_rise = True
+                    self.current_sprite = 0
+
     def move(self):
         if not self.is_dead:
             if self.direction == -1:
@@ -609,6 +631,12 @@ class Zombie(pygame.sprite.Sprite):
             else:
                 self.animate(self.die_left_sprites, 0.95)
 
+        if self.animate_rise:
+            if self.direction == 1:
+                self.animate(self.rise_right_sprites, 0.95)
+            else:
+                self.animate(self.rise_left_sprites, 0.95)
+
     def animate(self, sprite_list, speed):
         if self.current_sprite < len(sprite_list) - 1:
             self.current_sprite += speed
@@ -617,6 +645,11 @@ class Zombie(pygame.sprite.Sprite):
             if self.animate_death:
                 self.animate_death = False
                 self.current_sprite = len(sprite_list) - 1
+            if self.animate_rise:
+                self.animate_rise = False
+                self.is_dead = False
+                self.frame_count = 0
+                self.round_time = 0
 
         self.image = sprite_list[int(self.current_sprite)]
 
