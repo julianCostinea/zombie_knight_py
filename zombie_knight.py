@@ -31,6 +31,10 @@ class Game:
         self.title_font = pygame.font.Font("fonts/Poultrygeist.ttf", 48)
         self.HUD_font = pygame.font.Font("fonts/Pixel.ttf", 24)
 
+        self.lost_ruby_sound = pygame.mixer.Sound("sounds/lost_ruby.wav")
+        self.ruby_pickup_sound = pygame.mixer.Sound("sounds/ruby_pickup.wav")
+        pygame.mixer.music.load("sounds/level_music.wav")
+
         self.player = player
         self.zombie_group = zombie_group
         self.platform_group = platform_group
@@ -101,11 +105,26 @@ class Game:
                     zombie.kick_sound.play()
                     zombie.kill()
                     self.score += 25
+
+                    ruby = Ruby(self.platform_group, self.portal_group)
+                    self.ruby_group.add(ruby)
                 else:
                     self.player.hit_sound.play()
                     self.player.health -= 20
                     self.player.position.x -= 256 * zombie.direction
                     self.player.rect.bottomleft = self.player.position
+
+        if pygame.sprite.spritecollide(self.player, self.ruby_group, True):
+            self.ruby_pickup_sound.play()
+            self.score += 100
+            self.player.health += 10
+            if self.player.health > self.player.STARTING_HEALTH:
+                self.player.health = self.player.STARTING_HEALTH
+
+        for zombie in self.zombie_group:
+            if zombie.is_dead == False:
+                # summon another zombie
+                pass
 
     def check_round_completion(self):
         pass
@@ -713,20 +732,77 @@ class RubyMaker(pygame.sprite.Sprite):
 
 
 class Ruby(pygame.sprite.Sprite):
-    def __init__(self, image, x, y):
-        pass
+    def __init__(self, platform_group, portal_group):
+        super().__init__()
+        self.VERTICAL_ACCELERATION = 3
+        self.HORIZONTAL_VELOCITY = 5
+
+        self.ruby_sprites = []
+        self.ruby_sprites.append(pygame.transform.scale(pygame.image.load("images/ruby/tile000.png"), (64, 64)))
+        self.ruby_sprites.append(pygame.transform.scale(pygame.image.load("images/ruby/tile001.png"), (64, 64)))
+        self.ruby_sprites.append(pygame.transform.scale(pygame.image.load("images/ruby/tile002.png"), (64, 64)))
+        self.ruby_sprites.append(pygame.transform.scale(pygame.image.load("images/ruby/tile003.png"), (64, 64)))
+        self.ruby_sprites.append(pygame.transform.scale(pygame.image.load("images/ruby/tile004.png"), (64, 64)))
+        self.ruby_sprites.append(pygame.transform.scale(pygame.image.load("images/ruby/tile005.png"), (64, 64)))
+
+        self.current_sprite = 0
+        self.image = self.ruby_sprites[self.current_sprite]
+        self.rect = self.image.get_rect()
+        self.rect.bottomleft = (WINDOW_WIDTH // 2, 100)
+
+        self.platform_group = platform_group
+        self.portal_group = portal_group
+
+        self.portal_sound = pygame.mixer.Sound("sounds/portal_sound.wav")
+
+        self.position = vector(self.rect.x, self.rect.y)
+        self.velocity = vector(random.choice([-1, 1]) * self.HORIZONTAL_VELOCITY, 0)
+        self.acceleration = vector(0, self.VERTICAL_ACCELERATION)
 
     def update(self):
-        pass
+        self.animate(self.ruby_sprites, 0.25)
+        self.move()
+        self.check_collisions()
 
     def check_collisions(self):
-        pass
+        collided_platforms = pygame.sprite.spritecollide(self, self.platform_group, False)
+        if collided_platforms:
+            self.position.y = collided_platforms[0].rect.top + 1
+            self.velocity.y = 0
+
+        # portal collision
+        if pygame.sprite.spritecollide(self, self.portal_group, False):
+            self.portal_sound.play()
+            if self.position.x > WINDOW_WIDTH // 2:
+                self.position.x = 86
+            else:
+                self.position.x = WINDOW_WIDTH - 150
+
+            if self.position.y > WINDOW_HEIGHT // 2:
+                self.position.y = 64
+            else:
+                self.position.y = WINDOW_HEIGHT - 132
+
+            self.rect.bottomleft = self.position
 
     def move(self):
-        pass
+        self.velocity += self.acceleration
+        self.position += self.velocity + 0.5 * self.acceleration
 
-    def animate(self):
-        pass
+        if self.position.x < 0:
+            self.position.x = WINDOW_WIDTH
+        elif self.position.x > WINDOW_WIDTH:
+            self.position.x = 0
+
+        self.rect.bottomleft = self.position
+
+    def animate(self, sprite_list, speed):
+        if self.current_sprite < len(sprite_list) - 1:
+            self.current_sprite += speed
+        else:
+            self.current_sprite = 0
+
+        self.image = sprite_list[int(self.current_sprite)]
 
 
 class Portal(pygame.sprite.Sprite):
@@ -976,6 +1052,9 @@ while running:
 
     my_zombie_group.update()
     my_zombie_group.draw(display_surface)
+
+    my_ruby_group.update()
+    my_ruby_group.draw(display_surface)
 
     my_game.update()
     my_game.draw()
