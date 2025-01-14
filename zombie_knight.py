@@ -52,6 +52,8 @@ class Game:
 
         self.add_zombie()
 
+        self.check_round_completion()
+
     def draw(self):
         WHITE = (255, 255, 255)
         GREEN = (0, 255, 0)
@@ -123,20 +125,34 @@ class Game:
 
         for zombie in self.zombie_group:
             if zombie.is_dead == False:
-                # summon another zombie
-                pass
+                if pygame.sprite.spritecollide(zombie, self.ruby_group, True):
+                    self.lost_ruby_sound.play()
+                    zombie = Zombie(self.platform_group, self.portal_group, self.round_number, 5 + self.round_number)
+                    self.zombie_group.add(zombie)
 
     def check_round_completion(self):
-        pass
+        if self.round_time == 0:
+            self.start_new_round()
 
     def check_game_over(self):
         pass
 
     def start_new_round(self):
-        pass
+        self.round_number += 1
 
-    def pause_game(self):
-        pass
+        if self.round_number < self.STARTING_ZOMBIE_CREATION_TIME:
+            self.zombie_creation_time -= 1
+
+        self.round_time = self.STARTING_ROUND_TIME
+        self.ruby_group.empty()
+        self.bullet_group.empty()
+
+        self.player.reset()
+
+        self.pause_game("You survived the night!", "Press enter to continue...")
+
+    def pause_game(self, main_text, sub_text):
+        global running;
 
     def reset_game(self):
         pass
@@ -1031,9 +1047,9 @@ while running:
                 my_player.jump()
             if event.key == pygame.K_UP:
                 my_player.fire()
-            if event.key == pygame.K_RETURN:
-                zombie = Zombie(my_platform_group, my_portal_group, 2, 7)
-                my_zombie_group.add(zombie)
+            # if event.key == pygame.K_RETURN:
+            #     zombie = Zombie(my_platform_group, my_portal_group, 2, 7)
+            #     my_zombie_group.add(zombie)
 
     display_surface.blit(background_image, background_rect)
 
