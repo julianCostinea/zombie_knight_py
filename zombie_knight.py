@@ -152,7 +152,38 @@ class Game:
         self.pause_game("You survived the night!", "Press enter to continue...")
 
     def pause_game(self, main_text, sub_text):
-        global running;
+        global running
+        pygame.mixer.music.pause()
+
+        WHITE = (255, 255, 255)
+        BLACK = (0, 0, 0)
+        GREEN = (0, 255, 0)
+
+        main_text = self.title_font.render(main_text, True, GREEN)
+        main_rect = main_text.get_rect()
+        main_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
+
+        sub_text = self.title_font.render(sub_text, True, WHITE)
+        sub_rect = sub_text.get_rect()
+        sub_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 50)
+
+        display_surface.fill(BLACK)
+        display_surface.blit(main_text, main_rect)
+        display_surface.blit(sub_text, sub_rect)
+        pygame.display.update()
+
+        is_paused = True
+        while is_paused:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                    is_paused = False
+                    pygame.mixer.music.stop()
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        is_paused = False
+                        pygame.mixer.music.unpause()
 
     def reset_game(self):
         pass
@@ -1033,6 +1064,8 @@ background_rect = background_image.get_rect()
 background_rect.topleft = (0, 0)
 
 my_game = Game(my_player, my_zombie_group, my_platform_group, my_portal_group, my_bullet_group, my_ruby_group)
+my_game.pause_game("Zombie Knight", "Press enter to start")
+pygame.mixer.music.play(-1)
 
 # Main loop
 
