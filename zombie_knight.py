@@ -53,6 +53,7 @@ class Game:
         self.add_zombie()
 
         self.check_round_completion()
+        self.check_game_over()
 
     def draw(self):
         WHITE = (255, 255, 255)
@@ -135,7 +136,10 @@ class Game:
             self.start_new_round()
 
     def check_game_over(self):
-        pass
+        if self.player.health <= 0:
+            pygame.mixer.music.stop()
+            self.pause_game("Game Over", "Final score: " + str(self.score) + " Press enter to play again...")
+            self.reset_game()
 
     def start_new_round(self):
         self.round_number += 1
@@ -186,7 +190,19 @@ class Game:
                         pygame.mixer.music.unpause()
 
     def reset_game(self):
-        pass
+        self.score = 0
+        self.round_number = 1
+        self.round_time = self.STARTING_ROUND_TIME
+        self.zombie_creation_time = self.STARTING_ZOMBIE_CREATION_TIME
+
+        self.player.health = self.player.STARTING_HEALTH
+        self.player.reset()
+
+        self.zombie_group.empty()
+        self.ruby_group.empty()
+        self.bullet_group.empty()
+
+        pygame.mixer.music.play(-1)
 
 
 class Tile(pygame.sprite.Sprite):
@@ -211,6 +227,8 @@ class Tile(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
+
+        self.mask = pygame.mask.from_surface(self.image)
 
 
 class Player(pygame.sprite.Sprite):
@@ -354,6 +372,8 @@ class Player(pygame.sprite.Sprite):
         self.check_collisions()
         self.check_animations()
 
+        self.mask = pygame.mask.from_surface(self.image)
+
     def move(self):
         self.acceleration = vector(0, self.VERTICAL_ACCELERATION)
 
@@ -383,12 +403,12 @@ class Player(pygame.sprite.Sprite):
 
     def check_collisions(self):
         if self.velocity.y > 0:
-            collided_platforms = pygame.sprite.spritecollide(self, self.platform_group, False)
+            collided_platforms = pygame.sprite.spritecollide(self, self.platform_group, False, pygame.sprite.collide_mask)
             if collided_platforms:
-                self.position.y = collided_platforms[0].rect.top + 1
+                self.position.y = collided_platforms[0].rect.top + 5
                 self.velocity.y = 0
         if self.velocity.y < 0:
-            collided_platforms = pygame.sprite.spritecollide(self, self.platform_group, False)
+            collided_platforms = pygame.sprite.spritecollide(self, self.platform_group, False, pygame.sprite.collide_mask)
             if collided_platforms:
                 self.velocity.y = 0
                 while pygame.sprite.spritecollide(self, self.platform_group, False):
@@ -434,6 +454,7 @@ class Player(pygame.sprite.Sprite):
         self.animate_fire = True
 
     def reset(self):
+        self.velocity = (0, 0)
         self.position = vector(self.starting_x, self.starting_y)
         self.rect.bottomleft = self.position
 
